@@ -16,73 +16,173 @@ const formattedDate = pubDate.toLocaleDateString('ja-JP', {
 });
 ---
 
-<Layout title={title} description={description}>
-  <nav>
-    <a href="/">Home</a>
-    <a href="/blog">Blog</a>
-  </nav>
-  <main>
-    <article>
-      <header>
-        <h1>{title}</h1>
-        <p class="meta">
-          <time datetime={pubDate.toISOString()}>{formattedDate}</time>
-          {tags && tags.map(tag => <span class="tag">{tag}</span>)}
-        </p>
-      </header>
-      <slot />
-    </article>
-  </main>
+<Layout title={`${title} — Astro Field`} description={description}>
+  <div class="page">
+    <header class="site-header">
+      <a href="/" class="logo">Astro Field</a>
+      <nav>
+        <a href="/blog">Blog</a>
+      </nav>
+    </header>
+    <main>
+      <article>
+        <header class="post-header">
+          <div class="meta">
+            <time datetime={pubDate.toISOString()}>{formattedDate}</time>
+            {tags && (
+              <div class="tags">
+                {tags.map(tag => <span class="tag">{tag}</span>)}
+              </div>
+            )}
+          </div>
+          <h1>{title}</h1>
+          <p class="description">{description}</p>
+        </header>
+        <div class="prose">
+          <slot />
+        </div>
+      </article>
+    </main>
+  </div>
 </Layout>
 
 <style>
-  nav {
+  .page {
+    min-height: 100vh;
+    padding: 1.5rem;
+  }
+
+  .site-header {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+    margin-bottom: 3rem;
   }
+
+  .logo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
   nav a {
-    color: #555;
-    text-decoration: none;
+    font-size: 0.9rem;
+    color: var(--muted);
+    transition: color 0.2s;
   }
+
   nav a:hover {
-    color: #000;
+    color: var(--text);
   }
+
   main {
-    font-family: system-ui, sans-serif;
     max-width: 720px;
     margin: 0 auto;
-    padding: 1rem 1.5rem;
-    line-height: 1.7;
-    color: #222;
+    padding: 0 1rem;
   }
-  h1 {
-    margin-bottom: 0.25rem;
+
+  .post-header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
   }
+
   .meta {
-    color: #777;
-    font-size: 0.9rem;
     display: flex;
-    gap: 0.5rem;
     align-items: center;
-    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
   }
+
+  time {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.4rem;
+  }
+
   .tag {
-    background: #f0f0f0;
-    border-radius: 4px;
-    padding: 0.1rem 0.5rem;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
   }
-  article :global(pre) {
-    background: #f5f5f5;
-    padding: 1rem;
-    border-radius: 6px;
+
+  h1 {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+  }
+
+  .description {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .prose {
+    color: #d4d4d8;
+    line-height: 1.8;
+    font-size: 1rem;
+  }
+
+  .prose :global(h2) {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 2.5rem 0 1rem;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .prose :global(h3) {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--text);
+  }
+
+  .prose :global(p) {
+    margin-bottom: 1.25rem;
+  }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: 0 0 1.25rem 1.5rem;
+  }
+
+  .prose :global(li) {
+    margin-bottom: 0.4rem;
+  }
+
+  .prose :global(pre) {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
     overflow-x: auto;
+    margin-bottom: 1.25rem;
   }
-  article :global(code) {
-    font-family: monospace;
-    font-size: 0.9em;
+
+  .prose :global(code) {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.875em;
+  }
+
+  .prose :global(p code) {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.1em 0.4em;
   }
 </style>

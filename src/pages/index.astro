@@ -1,11 +1,126 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
 <Layout>
-	<Welcome />
+  <div class="page">
+    <div class="glow" aria-hidden="true"></div>
+    <header class="site-header">
+      <span class="logo">Astro Field</span>
+      <nav>
+        <a href="/blog">Blog</a>
+      </nav>
+    </header>
+    <main class="hero">
+      <h1>
+        <span class="gradient-text">Write.</span><br />
+        <span class="gradient-text">Think.</span><br />
+        <span class="gradient-text">Share.</span>
+      </h1>
+      <p class="description">Astro で作るシンプルなブログ。</p>
+      <a href="/blog" class="cta">記事を読む →</a>
+    </main>
+  </div>
 </Layout>
+
+<style>
+  .page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glow {
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  nav a {
+    font-size: 0.9rem;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+
+  nav a:hover {
+    color: var(--text);
+  }
+
+  .hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 6rem 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  h1 {
+    font-size: clamp(3rem, 10vw, 6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent-from) 50%, var(--accent-to) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .description {
+    color: var(--muted);
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+    color: #fff;
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+
+  .cta:hover {
+    opacity: 0.85;
+  }
+</style>
