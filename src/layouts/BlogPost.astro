@@ -1,0 +1,88 @@
+---
+import Layout from './Layout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  tags?: string[];
+}
+
+const { title, description, pubDate, tags } = Astro.props;
+const formattedDate = pubDate.toLocaleDateString('ja-JP', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<Layout title={title} description={description}>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/blog">Blog</a>
+  </nav>
+  <main>
+    <article>
+      <header>
+        <h1>{title}</h1>
+        <p class="meta">
+          <time datetime={pubDate.toISOString()}>{formattedDate}</time>
+          {tags && tags.map(tag => <span class="tag">{tag}</span>)}
+        </p>
+      </header>
+      <slot />
+    </article>
+  </main>
+</Layout>
+
+<style>
+  nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+  nav a {
+    color: #555;
+    text-decoration: none;
+  }
+  nav a:hover {
+    color: #000;
+  }
+  main {
+    font-family: system-ui, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    line-height: 1.7;
+    color: #222;
+  }
+  h1 {
+    margin-bottom: 0.25rem;
+  }
+  .meta {
+    color: #777;
+    font-size: 0.9rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .tag {
+    background: #f0f0f0;
+    border-radius: 4px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  article :global(pre) {
+    background: #f5f5f5;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  article :global(code) {
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+</style>
