@@ -5,8 +5,6 @@ pubDate: 2026-04-19
 tags: ["astro", "blog"]
 ---
 
-# Hello, World!
-
 Astroで作ったMarkdownブログへようこそ。
 
 ## Astroとは

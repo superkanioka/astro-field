@@ -1,0 +1,49 @@
+---
+interface Props {
+  current?: 'home' | 'blog';
+}
+const { current } = Astro.props;
+---
+
+<header class="site-header">
+  {current === 'home' ? (
+    <span class="logo">Astro Field</span>
+  ) : (
+    <a href="/" class="logo">Astro Field</a>
+  )}
+  <nav>
+    <a href="/blog" class:list={[{ active: current === 'blog' }]}>Blog</a>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  nav a {
+    font-size: 0.9rem;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+
+  nav a:hover,
+  nav a.active {
+    color: var(--text);
+  }
+</style>

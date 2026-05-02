@@ -5,8 +5,6 @@ pubDate: 2026-04-20
 tags: ["astro", "tips"]
 ---
 
-# Astroの便利なTips
-
 ## Content Collections
 
 `src/content/` にMarkdownを置くだけで型安全にコンテンツ管理できます。
