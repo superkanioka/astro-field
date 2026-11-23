@@ -1,4 +1,5 @@
 ---
+import { url } from '../../utils/url';
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
@@ -16,7 +17,7 @@ const posts = (await getCollection('blog')).sort(
       <ul>
         {posts.map(post => (
           <li>
-            <a href={`/blog/${post.id}`} class="card">
+            <a href={url(`/blog/${post.id}`)} class="card">
               <div class="card-inner">
                 <h2>{post.data.title}</h2>
                 <p>{post.data.description}</p>

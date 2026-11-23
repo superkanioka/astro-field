@@ -1,6 +1,7 @@
 ---
+import { url } from '../utils/url';
 interface Props {
-  current?: 'home' | 'blog';
+  current?: 'home' | 'blog' | 'minecraft';
 }
 const { current } = Astro.props;
 ---
@@ -9,10 +10,11 @@ const { current } = Astro.props;
   {current === 'home' ? (
     <span class="logo">Astro Field</span>
   ) : (
-    <a href="/" class="logo">Astro Field</a>
+    <a href={url('/')} class="logo">Astro Field</a>
   )}
   <nav>
-    <a href="/blog" class:list={[{ active: current === 'blog' }]}>Blog</a>
+    <a href={url('/blog')} class:list={[{ active: current === 'blog' }]}>Blog</a>
+    <a href={url('/minecraft')} class:list={[{ active: current === 'minecraft' }]}>Minecraft</a>
   </nav>
 </header>
 
@@ -34,6 +36,11 @@ const { current } = Astro.props;
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--text);
+  }
+
+  nav {
+    display: flex;
+    gap: 1.25rem;
   }
 
   nav a {

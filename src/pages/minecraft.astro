@@ -1,0 +1,414 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+
+// サーバー情報はここで一元管理する。変更時はこのブロックだけ直せばよい。
+const server = {
+  address: 'wap-allan.tun.ply.gg',
+  fallbackAddress: 'wap-allan.tun.ply.gg:3459',
+  version: '26.3',
+  updatedAt: '2026-11-24',
+};
+
+const specs = [
+  { label: 'エディション', value: 'Java 版のみ', note: '統合版・スマホ・Switch からは入れません' },
+  { label: 'バージョン', value: server.version, note: 'バニラ（MOD なし）' },
+  { label: '参加条件', value: 'ホワイトリスト制', note: '事前にプレイヤー名の登録が必要' },
+  { label: '最大人数', value: '20 人' },
+  { label: 'ゲームモード', value: 'サバイバル', note: '難易度はイージー' },
+  { label: '稼働時間', value: '基本 24 時間', note: 'メンテナンス時を除く' },
+];
+
+const troubles = [
+  {
+    symptom: '「ホワイトリストに登録されていません」と出る',
+    fix: 'まだ登録されていません。Discord で管理者にプレイヤー名を伝えて登録を依頼してください。',
+  },
+  {
+    symptom: '「サーバーのバージョンが新しい / 古い」と出る',
+    fix: `ランチャーで「最新のリリース（${server.version}）」を選んで起動し直してください。`,
+  },
+  {
+    symptom: '接続できない / タイムアウトする',
+    fix: '予備アドレスを試してください。それでも入れない場合はサーバー停止中の可能性があるので、Discord で管理者に連絡してください。',
+  },
+  {
+    symptom: '少しラグがある',
+    fix: '海外の中継サーバー経由で接続しているため、ping 100ms 前後は仕様です。',
+  },
+];
+---
+
+<Layout
+  title="Minecraft サーバー参加ガイド — Astro Field"
+  description="Astro-field Minecraft サーバーへの参加方法とよくあるトラブルのまとめ。"
+  noindex
+>
+  <div class="page">
+    <div class="glow" aria-hidden="true"></div>
+    <Header current="minecraft" />
+    <main>
+      <header class="intro">
+        <p class="eyebrow">Discord メンバー向け</p>
+        <h1>Minecraft サーバー参加ガイド</h1>
+        <p class="lead">
+          Java 版 {server.version} のバニラサバイバルサーバーです。
+          参加にはホワイトリスト登録が必要なので、まず Discord で管理者に声をかけてください。
+        </p>
+      </header>
+
+      <section class="address-card" aria-labelledby="address-heading">
+        <h2 id="address-heading" class="card-label">サーバーアドレス</h2>
+        <div class="address-row">
+          <code class="address">{server.address}</code>
+          <button type="button" class="copy" data-copy={server.address}>コピー</button>
+        </div>
+        <p class="fallback">
+          入れないときの予備:
+          <code>{server.fallbackAddress}</code>
+          <button type="button" class="copy small" data-copy={server.fallbackAddress}>コピー</button>
+        </p>
+      </section>
+
+      <section aria-labelledby="specs-heading">
+        <h2 id="specs-heading">サーバー情報</h2>
+        <dl class="specs">
+          {specs.map(spec => (
+            <div class="spec">
+              <dt>{spec.label}</dt>
+              <dd>
+                <span class="value">{spec.value}</span>
+                {spec.note && <span class="note">{spec.note}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section aria-labelledby="steps-heading">
+        <h2 id="steps-heading">参加までの流れ</h2>
+        <ol class="steps">
+          <li>
+            <h3>プレイヤー名を伝える</h3>
+            <p>
+              Discord で管理者に <strong>Java 版のプレイヤー名</strong>（Minecraft 内で表示される名前）を伝えてください。
+              ホワイトリストに登録されたら連絡があります。
+            </p>
+          </li>
+          <li>
+            <h3>バージョンを合わせて起動</h3>
+            <p>Minecraft Launcher でバージョン「最新のリリース（{server.version}）」を選んで起動します。</p>
+          </li>
+          <li>
+            <h3>サーバーを追加</h3>
+            <p>
+              「マルチプレイ」→「サーバーを追加」を開き、サーバーアドレスに
+              <code>{server.address}</code> を入力して「完了」を押します。
+            </p>
+          </li>
+          <li>
+            <h3>接続</h3>
+            <p>一覧に出たサーバーを選んで「サーバーに接続」を押せば参加できます。</p>
+          </li>
+        </ol>
+      </section>
+
+      <section aria-labelledby="trouble-heading">
+        <h2 id="trouble-heading">うまく入れないとき</h2>
+        <ul class="troubles">
+          {troubles.map(t => (
+            <li>
+              <p class="symptom">{t.symptom}</p>
+              <p class="fix">{t.fix}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="safety-heading">
+        <h2 id="safety-heading">安心して遊べるように</h2>
+        <ul class="safety">
+          <li>正規の Minecraft アカウントでのみ接続できます。</li>
+          <li>ワールドは毎日 4:00 に自動バックアップ（14 日分保持）しています。荒らしや事故があっても巻き戻せます。</li>
+        </ul>
+      </section>
+
+      <p class="updated">最終更新: <time datetime={server.updatedAt}>{server.updatedAt.replaceAll('-', '/')}</time></p>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('button[data-copy]').forEach(button => {
+    const original = button.textContent;
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy ?? '');
+        button.textContent = 'コピーしました';
+      } catch {
+        button.textContent = 'コピーできませんでした';
+      }
+      setTimeout(() => (button.textContent = original), 2000);
+    });
+  });
+</script>
+
+<style>
+  .page {
+    min-height: 100vh;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glow {
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  main {
+    max-width: 720px;
+    margin: 3rem auto 4rem;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .eyebrow {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--accent-from);
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--text), var(--accent-from));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .lead {
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.25rem;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.9em;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.1em 0.4em;
+    overflow-wrap: anywhere;
+  }
+
+  /* アドレス */
+  .address-card {
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.06));
+  }
+
+  .card-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .address-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .address {
+    font-size: clamp(1.05rem, 4vw, 1.4rem);
+    font-weight: 600;
+    color: var(--text);
+    background: none;
+    border: 0;
+    padding: 0;
+  }
+
+  .copy {
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+    border: 0;
+    border-radius: var(--radius);
+    padding: 0.45rem 1rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .copy:hover {
+    opacity: 0.85;
+  }
+
+  .copy.small {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .fallback {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* サーバー情報 */
+  .specs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .spec {
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  dt {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+
+  dd {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .value {
+    font-weight: 600;
+  }
+
+  .note {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* 手順 */
+  .steps {
+    list-style: none;
+    counter-reset: step;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 1.25rem 1.25rem 1.25rem 4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 1.25rem;
+    top: 1.2rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: grid;
+    place-items: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .steps p,
+  .fix,
+  .safety li {
+    color: #d4d4d8;
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+
+  .steps strong {
+    color: var(--text);
+  }
+
+  /* トラブル */
+  .troubles {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .troubles li {
+    padding: 1rem 1.25rem;
+    border-left: 3px solid var(--accent-from);
+    background: rgba(168, 85, 247, 0.06);
+    border-radius: var(--radius);
+  }
+
+  .symptom {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  /* 安全面 */
+  .safety {
+    margin-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .updated {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: right;
+  }
+</style>

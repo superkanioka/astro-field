@@ -1,10 +1,12 @@
 ---
+import { url } from '../utils/url';
 interface Props {
   title?: string;
   description?: string;
+  noindex?: boolean;
 }
 
-const { title = 'Astro Field', description } = Astro.props;
+const { title = 'Astro Field', description, noindex = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -12,11 +14,12 @@ const { title = 'Astro Field', description } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    <link rel="icon" href={url('/favicon.ico')} />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
   </head>
   <body>
     <slot />
