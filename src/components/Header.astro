@@ -1,7 +1,7 @@
 ---
 import { url } from '../utils/url';
 interface Props {
-  current?: 'home' | 'blog' | 'minecraft';
+  current?: 'home' | 'blog' | 'minecraft' | 'superk';
 }
 const { current } = Astro.props;
 ---
@@ -13,6 +13,7 @@ const { current } = Astro.props;
     <a href={url('/')} class="logo">Astro Field</a>
   )}
   <nav>
+    <a href={url('/superk')} class:list={[{ active: current === 'superk' }]}>Super-K</a>
     <a href={url('/minecraft')} class:list={[{ active: current === 'minecraft' }]}>Minecraft</a>
   </nav>
 </header>

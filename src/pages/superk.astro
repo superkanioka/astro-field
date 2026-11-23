@@ -1,0 +1,425 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import SuperKCylinder from '../components/SuperKCylinder.astro';
+
+// 神岡宇宙素粒子研究施設が公開しているイベントディスプレイ画像。
+// 元ページ (realtimemonitor/) も 10 秒ごとに再読み込みしているので、同じ間隔で更新する。
+const source = {
+  image: 'https://www-sk.icrr.u-tokyo.ac.jp/realtimemonitor/skev.gif',
+  page: 'https://www-sk.icrr.u-tokyo.ac.jp/realtimemonitor/',
+  home: 'https://www-sk.icrr.u-tokyo.ac.jp/sk/',
+  detector: 'https://www-sk.icrr.u-tokyo.ac.jp/sk/about/detector/',
+  intervalSec: 10,
+};
+
+const fields = [
+  { label: 'Run / Subrun', desc: '測定の通し番号（Run）と、その中をさらに区切った番号（Subrun）' },
+  { label: 'Event / Event time', desc: 'イベント番号と、そのイベントが起きた時刻（日本時間）' },
+  { label: 'TRG Type(s)', desc: 'どのトリガー（記録の条件）に引っかかったか。LE・HE・SLE はエネルギーの大きさ別、OD は外水槽の反応' },
+  { label: 'TotalPE ID/OD', desc: '内水槽 (ID) と外水槽 (OD) で検出された光の総量（光電子数）' },
+  { label: 'NumHits ID/OD', desc: '光を検出した光電子増倍管の本数' },
+  { label: 'Events scanned', desc: 'モニターがこれまでに処理したイベント数' },
+];
+---
+
+<Layout
+  title="Super-Kamiokande リアルタイムモニター — Astro Field"
+  description="スーパーカミオカンデが公開しているイベントディスプレイを 10 秒ごとに表示します。"
+>
+  <div class="page">
+    <div class="glow" aria-hidden="true"></div>
+    <Header current="superk" />
+    <main>
+      <header class="intro">
+        <h1>Super-Kamiokande リアルタイムモニター</h1>
+        <p class="lead">
+          スーパーカミオカンデで今まさに記録されたイベントを、検出器の形に組み立てて表示しています。
+        </p>
+      </header>
+
+      <section
+        class="monitor"
+        aria-label="イベントディスプレイ"
+        data-view="3d"
+        style={`--skev: url("${source.image}")`}
+      >
+        <div class="status">
+          <span class="dot" data-state="loading"></span>
+          <span class="status-text" aria-live="polite">読み込み中…</span>
+          <div class="controls">
+            <div class="view-switch" role="group" aria-label="表示方法">
+              <button type="button" data-view="3d" aria-pressed="true">円筒</button>
+              <button type="button" data-view="2d" aria-pressed="false">展開図</button>
+            </div>
+            <button type="button" class="toggle" aria-pressed="false">一時停止</button>
+          </div>
+        </div>
+        <div class="view-3d">
+          <SuperKCylinder />
+        </div>
+        <a href={source.page} target="_blank" rel="noopener" class="frame view-2d">
+          <img
+            id="skev"
+            src={source.image}
+            data-src={source.image}
+            data-interval={source.intervalSec}
+            width="1437"
+            height="955"
+            alt="スーパーカミオカンデの最新イベントディスプレイ"
+          />
+        </a>
+        <p class="credit">
+          このページの展開図と円筒表示は、<a href={source.home} target="_blank" rel="noopener">東京大学宇宙線研究所 神岡宇宙素粒子研究施設</a>
+          提供のデータ（<a href={source.page} target="_blank" rel="noopener">リアルタイムモニター</a>の画像）を用いています。
+          画像の著作権は同施設にあります。
+        </p>
+        <p class="credit">
+          個人の学習を目的とした非公式・非商用のページです。表示内容の正確さは保証されません。
+        </p>
+      </section>
+
+      <section aria-labelledby="howto-heading">
+        <h2 id="howto-heading">画像の見方</h2>
+        <p class="body">
+          スーパーカミオカンデは、5 万トンの水を入れた円筒形のタンクに光センサー（光電子増倍管）を並べた検出器です。
+          タンクは内水槽と外水槽の 2 層になっています（<a href={source.detector} target="_blank" rel="noopener">検出器の詳しい説明</a>）。
+        </p>
+        <ul class="body">
+          <li><strong>内水槽</strong>: 壁に <strong>11,129 本</strong>のセンサーが内向きに付いています。荷電粒子が水中を走ると出るチェレンコフ光を捉え、光の量と届いた時刻から粒子のエネルギーや向きを求めます。</li>
+          <li><strong>外水槽</strong>: <strong>1,885 本</strong>のセンサーが外向きに付いています。直径約 20cm（8 インチ）で、内水槽のものより小さいセンサーです。</li>
+        </ul>
+        <h3 class="sub">表示の読み方</h3>
+        <ul class="body">
+          <li><strong>展開図</strong>は、円筒形の検出器を切り開いたものです。大きい図が内水槽、右上の小さい図が外水槽で、どちらも中央の長方形が側面、上下の円が天井と底面です。壁はタンクの<strong>内側から見た</strong>向きで描かれています。</li>
+          <li><strong>円筒</strong>表示は、その展開図をタンクの形に組み直し、外から眺めたときの実際の配置になるよう左右を反転しています。ドラッグで回せます。</li>
+          <li>色の付いた小さな点が、光を捉えたセンサー 1 本です。<strong>色は光の強さ</strong>を表し、赤いほど強い光を受けています（下端の目盛り）。</li>
+          <li>円筒表示は内水槽だけを組み立てています。外水槽 (OD) の反応は展開図の右上で見られます。</li>
+          <li>リング状に光が集まっていれば、そこに向かって荷電粒子が走ったしるしです。</li>
+        </ul>
+        <p class="body note">
+          表示されるのは記録された全イベントのうちの 1 つずつです。大半は宇宙線ミューオンや放射線のバックグラウンドで、ニュートリノの反応はごく一部です。
+        </p>
+      </section>
+
+      <section aria-labelledby="fields-heading">
+        <h2 id="fields-heading">イベント情報の項目</h2>
+        <dl class="fields">
+          {fields.map(f => (
+            <div class="field">
+              <dt>{f.label}</dt>
+              <dd>{f.desc}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  const monitor = document.querySelector<HTMLElement>('.monitor')!;
+  const img = document.getElementById('skev') as HTMLImageElement;
+  const dot = document.querySelector<HTMLElement>('.status .dot')!;
+  const text = document.querySelector<HTMLElement>('.status-text')!;
+  const toggle = document.querySelector<HTMLButtonElement>('.toggle')!;
+
+  const base = img.dataset.src!;
+  const intervalMs = Number(img.dataset.interval) * 1000;
+  let paused = false;
+  let timer: number | undefined;
+
+  const setStatus = (state: 'live' | 'paused' | 'error' | 'loading', message: string) => {
+    dot.dataset.state = state;
+    text.textContent = message;
+  };
+
+  const now = () =>
+    new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  // 新しい画像を裏で読み込んでから差し替える（ちらつき防止）
+  const refresh = () => {
+    const next = new Image();
+    next.onload = () => {
+      img.src = next.src;
+      monitor.style.setProperty('--skev', `url("${next.src}")`);
+      if (!paused) setStatus('live', `${now()} に更新`);
+    };
+    next.onerror = () => setStatus('error', `${now()} 取得に失敗（次回再試行）`);
+    next.src = `${base}?t=${Date.now()}`;
+  };
+
+  const schedule = () => {
+    clearInterval(timer);
+    if (paused || document.hidden) return;
+    timer = window.setInterval(refresh, intervalMs);
+  };
+
+  if (img.complete && img.naturalWidth > 0) {
+    setStatus('live', `${now()} に更新`);
+  } else {
+    img.addEventListener('load', () => setStatus('live', `${now()} に更新`), { once: true });
+    img.addEventListener('error', () => setStatus('error', '画像を取得できませんでした'), { once: true });
+  }
+
+  toggle.addEventListener('click', () => {
+    paused = !paused;
+    toggle.setAttribute('aria-pressed', String(paused));
+    toggle.textContent = paused ? '再開' : '一時停止';
+    if (paused) {
+      setStatus('paused', '一時停止中');
+    } else {
+      refresh();
+    }
+    schedule();
+  });
+
+  // 円筒 / 展開図の切り替え
+  for (const button of document.querySelectorAll<HTMLButtonElement>('.view-switch button')) {
+    button.addEventListener('click', () => {
+      monitor.dataset.view = button.dataset.view;
+      for (const b of document.querySelectorAll<HTMLButtonElement>('.view-switch button')) {
+        b.setAttribute('aria-pressed', String(b === button));
+      }
+    });
+  }
+
+  // タブが裏にある間は取りに行かない
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !paused) refresh();
+    schedule();
+  });
+
+  schedule();
+</script>
+
+<style>
+  .page {
+    min-height: 100vh;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glow {
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  main {
+    max-width: 960px;
+    margin: 3rem auto 4rem;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  h1 {
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--text), var(--accent-from));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .lead {
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  /* モニター */
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: var(--muted);
+  }
+
+  .dot[data-state='live'] {
+    background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    animation: pulse 2s infinite;
+  }
+
+  .dot[data-state='error'] {
+    background: #ef4444;
+  }
+
+  @keyframes pulse {
+    70% { box-shadow: 0 0 0 0.5rem rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot[data-state='live'] { animation: none; }
+  }
+
+  .controls {
+    margin-left: auto;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .view-switch {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .view-switch button {
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 0;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+  }
+
+  .view-switch button[aria-pressed='true'] {
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  }
+
+  .monitor[data-view='3d'] .view-2d,
+  .monitor[data-view='2d'] .view-3d {
+    display: none;
+  }
+
+  .toggle {
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .toggle:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+  }
+
+  .frame {
+    display: block;
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .credit {
+    margin-top: 0.5rem;
+    line-height: 1.7;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .credit a,
+  .body a {
+    color: var(--accent-from);
+    text-decoration: underline;
+    text-decoration-color: rgba(168, 85, 247, 0.4);
+    text-underline-offset: 3px;
+  }
+
+  /* 解説 */
+  .body {
+    color: #d4d4d8;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  p.body + ul.body {
+    margin-top: 1rem;
+  }
+
+  .sub {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+  }
+
+  ul.body {
+    margin-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .body strong {
+    color: var(--text);
+  }
+
+  .note {
+    margin-top: 1rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .field {
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  dt {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+
+  dd {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+</style>

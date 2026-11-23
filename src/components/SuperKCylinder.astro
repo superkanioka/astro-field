@@ -1,0 +1,268 @@
+---
+// スーパーカミオカンデのイベントディスプレイ（展開図の GIF）を CSS 3D で円筒に組み立てて表示する。
+// 画像は祖先要素の CSS 変数 --skev（url(...)）から読む。差し替えは呼び出し側で行う。
+// 画像に CORS ヘッダーが無く canvas / WebGL ではピクセルを扱えないため、背景画像の切り抜きで組む。
+
+// 1437×955 の GIF 内の位置（実測値）
+const IMG = { w: 1437, h: 955 };
+const INFO = { x: 18, y: 8, w: 332, h: 210 }; // 左上のイベント情報
+const INFO_SCALE = 0.85;
+---
+
+<div class="cyl-view">
+  <div
+    class="scene"
+    tabindex="0"
+    role="img"
+    aria-label="イベントディスプレイを円筒形に組み立てた立体表示。ドラッグまたは左右の矢印キーで回転できます。"
+  >
+    <div class="cyl"></div>
+  </div>
+
+  <aside class="side">
+    <div
+      class="crop info-crop"
+      role="img"
+      aria-label="イベント情報（元画像の左上部分）"
+      style={{
+        width: `${INFO.w * INFO_SCALE}px`,
+        height: `${INFO.h * INFO_SCALE}px`,
+        backgroundSize: `${IMG.w * INFO_SCALE}px ${IMG.h * INFO_SCALE}px`,
+        backgroundPosition: `${-INFO.x * INFO_SCALE}px ${-INFO.y * INFO_SCALE}px`,
+      }}
+    ></div>
+    <p class="hint">ドラッグ / ← → キーで回転</p>
+  </aside>
+
+  <div class="crop scale-crop" aria-hidden="true"></div>
+</div>
+
+<script>
+  // 展開図の位置（1437×955 の GIF で実測）。枠線 (x=32,1404 / y=319,635) は含めない
+  const IMG = { w: 1437, h: 955 };
+  const BARREL = { x0: 33.5, x1: 1403.5, y0: 320.5, y1: 633.5 };
+  const CAP = { rx: 222.5, ry: 147.5, cx: 714.5, top: 170.5, bottom: 783.5 };
+  // 画像は横 12.92px/m・縦 8.73px/m（内水槽 直径 33.8m・高さ 36.2m）で描かれているので、縦を伸ばして実寸比に戻す
+  const ASPECT = (1372 / Math.PI / 33.8) / (316 / 36.2);
+  const STRIPS = 72;
+  // 公式の展開図はタンクの内側から見た向きで描かれている（と考えられる）。
+  // そのまま外側に貼ると鏡像になるので、各面を左右反転して実際の配置に戻す。
+  // （親に scaleX(-1) を掛けると Chrome の奥行き判定が崩れるため、面ごとに反転する）
+  // 外から見た図だと分かった場合は false にする。
+  const DRAWN_FROM_INSIDE = true;
+  const MIRROR = DRAWN_FROM_INSIDE ? -1 : 1;
+  const FLIP = DRAWN_FROM_INSIDE ? ' rotateY(180deg)' : ''; // 面の裏側を見せる = 面内で左右反転
+
+  for (const view of document.querySelectorAll<HTMLElement>('.cyl-view')) {
+    const scene = view.querySelector<HTMLElement>('.scene')!;
+    const cyl = view.querySelector<HTMLElement>('.cyl')!;
+
+    let tiltX = -20;
+    let rotY = 0;
+    let auto = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let resumeTimer: number | undefined;
+
+    const apply = () => {
+      cyl.style.transform = `rotateX(${tiltX}deg) rotateY(${rotY}deg)`;
+    };
+
+    // 側面は短冊を並べた多角柱、天井・底面は楕円を円に引き伸ばした板
+    const build = () => {
+      const R = Math.max(100, Math.min(230, scene.clientWidth * 0.3));
+      const k = (2 * Math.PI * R) / (BARREL.x1 - BARREL.x0); // 画像 px → 表示 px（横）
+      const ky = k * ASPECT; // 縦
+      const H = (BARREL.y1 - BARREL.y0) * ky;
+      const stripImgW = (BARREL.x1 - BARREL.x0) / STRIPS;
+      const stripW = 2 * R * Math.tan(Math.PI / STRIPS) + 0.6; // 隙間が出ないよう少し重ねる
+
+      scene.style.height = `${Math.round(H + 1.3 * R)}px`;
+      scene.style.perspective = `${Math.round(8 * R)}px`;
+      cyl.replaceChildren();
+
+      for (let i = 0; i < STRIPS; i++) {
+        const el = document.createElement('div');
+        el.className = 'face';
+        const theta = MIRROR * (((i + 0.5) / STRIPS) * 360 - 180); // 画像の中央列が正面 (θ=0)
+        Object.assign(el.style, {
+          width: `${stripW}px`,
+          height: `${H}px`,
+          left: `${-stripW / 2}px`,
+          top: `${-H / 2}px`,
+          backgroundSize: `${IMG.w * k}px ${IMG.h * ky}px`,
+          backgroundPosition: `${-(BARREL.x0 + (i + 0.5) * stripImgW) * k + stripW / 2}px ${-BARREL.y0 * ky}px`,
+          transform: `rotateY(${theta}deg) translateZ(${R}px)${FLIP}`,
+        });
+        cyl.appendChild(el);
+      }
+
+      // 天井・底面は側面の中央列で接し、左右は反転しない（ふちの光り方の相関で確認済み）
+      for (const which of ['top', 'bottom'] as const) {
+        const el = document.createElement('div');
+        el.className = 'face cap';
+        const sx = R / CAP.rx;
+        const sy = R / CAP.ry;
+        Object.assign(el.style, {
+          width: `${2 * R}px`,
+          height: `${2 * R}px`,
+          left: `${-R}px`,
+          top: `${-R}px`,
+          backgroundSize: `${IMG.w * sx}px ${IMG.h * sy}px`,
+          backgroundPosition: `${-(CAP.cx - CAP.rx) * sx}px ${-(CAP[which] - CAP.ry) * sy}px`,
+          transform:
+            which === 'top'
+              ? `translateY(${-H / 2}px) rotateX(90deg)${FLIP}`
+              : `translateY(${H / 2}px) rotateX(-90deg)${FLIP}`,
+        });
+        cyl.appendChild(el);
+      }
+      apply();
+    };
+
+    // 触ったら自動回転を止め、しばらく操作が無ければ再開する
+    const interact = () => {
+      auto = false;
+      clearTimeout(resumeTimer);
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        resumeTimer = window.setTimeout(() => (auto = true), 6000);
+      }
+    };
+
+    let last: [number, number] | null = null;
+    scene.addEventListener('pointerdown', e => {
+      interact();
+      last = [e.clientX, e.clientY];
+      scene.setPointerCapture(e.pointerId);
+    });
+    scene.addEventListener('pointermove', e => {
+      if (!last) return;
+      rotY += (e.clientX - last[0]) * 0.4;
+      tiltX = Math.max(-85, Math.min(85, tiltX - (e.clientY - last[1]) * 0.4));
+      last = [e.clientX, e.clientY];
+      interact();
+      apply();
+    });
+    const release = () => (last = null);
+    scene.addEventListener('pointerup', release);
+    scene.addEventListener('pointercancel', release);
+    scene.addEventListener('keydown', e => {
+      const step = { ArrowLeft: [0, -10], ArrowRight: [0, 10], ArrowUp: [-10, 0], ArrowDown: [10, 0] }[e.key];
+      if (!step) return;
+      e.preventDefault();
+      interact();
+      tiltX = Math.max(-85, Math.min(85, tiltX + step[0]));
+      rotY += step[1];
+      apply();
+    });
+
+    // 見えている間だけ回す
+    let visible = false;
+    new IntersectionObserver(([entry]) => (visible = entry.isIntersecting)).observe(scene);
+    const tick = () => {
+      if (auto && visible && !document.hidden && scene.offsetParent !== null) {
+        rotY += 0.12;
+        apply();
+      }
+      requestAnimationFrame(tick);
+    };
+
+    let lastWidth = 0;
+    new ResizeObserver(() => {
+      if (scene.clientWidth && scene.clientWidth !== lastWidth) {
+        lastWidth = scene.clientWidth;
+        build();
+      }
+    }).observe(scene);
+    requestAnimationFrame(tick);
+  }
+</script>
+
+<style>
+  .cyl-view {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'scene side'
+      'scale scale';
+    gap: 1rem 1.5rem;
+    align-items: center;
+    padding: 1.25rem;
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .scene {
+    grid-area: scene;
+    position: relative;
+    min-width: 0;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    border-radius: var(--radius);
+  }
+
+  .scene:active {
+    cursor: grabbing;
+  }
+
+  .cyl {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+  }
+
+  .cyl :global(.face),
+  .crop {
+    background-image: var(--skev);
+    background-repeat: no-repeat;
+  }
+
+  .cyl :global(.face) {
+    position: absolute;
+  }
+
+  /* 外周の白線が入らないよう少し内側で切る */
+  .cyl :global(.cap) {
+    border-radius: 50%;
+    clip-path: circle(48.5%);
+  }
+
+  .side {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* 下端のカラースケール (x 30–1400, y 935–955) をコンテナ幅に合わせて切り抜く */
+  .scale-crop {
+    grid-area: scale;
+    width: 100%;
+    aspect-ratio: 1370 / 20;
+    background-size: calc(100% * 1437 / 1370) auto;
+    background-position: 44.8% 100%;
+  }
+
+  @media (max-width: 640px) {
+    .cyl-view {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'scene'
+        'scale'
+        'side';
+      padding: 0.75rem;
+    }
+
+    .side {
+      align-items: center;
+    }
+  }
+</style>
