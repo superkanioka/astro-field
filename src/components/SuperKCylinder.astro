@@ -2,14 +2,19 @@
 // スーパーカミオカンデのイベントディスプレイ（展開図の GIF）を CSS 3D で円筒に組み立てて表示する。
 // 画像は祖先要素の CSS 変数 --skev（url(...)）から読む。差し替えは呼び出し側で行う。
 // 画像に CORS ヘッダーが無く canvas / WebGL ではピクセルを扱えないため、背景画像の切り抜きで組む。
-
-// 1437×955 の GIF 内の位置（実測値）
-const IMG = { w: 1437, h: 955 };
-const INFO = { x: 18, y: 8, w: 332, h: 210 }; // 左上のイベント情報
-const INFO_SCALE = 0.85;
+//
+// 画像サイズは日によって変わる（1437×955, 1691×975 など）が、図の配置は画像の幅・高さに比例する。
+// 位置はすべて画像サイズに対する比率で持ち、読み込んだ画像の naturalWidth / naturalHeight から組み直す。
+// 呼び出し側は画像を読むたびに document へ 'skev:size'（detail: { w, h }）を送る。
 ---
 
-<div class="cyl-view">
+<div class="cyl-view" data-see-through="true">
+  <!-- 黒い背景を透明にするフィルター（明るさをそのまま不透明度にする）。mix-blend-mode は 3D を平面化するので使わない -->
+  <svg class="defs" width="0" height="0" aria-hidden="true">
+    <filter id="skev-black-to-alpha" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  4 4 4 0 0" />
+    </filter>
+  </svg>
   <div
     class="scene"
     tabindex="0"
@@ -20,30 +25,26 @@ const INFO_SCALE = 0.85;
   </div>
 
   <aside class="side">
-    <div
-      class="crop info-crop"
-      role="img"
-      aria-label="イベント情報（元画像の左上部分）"
-      style={{
-        width: `${INFO.w * INFO_SCALE}px`,
-        height: `${INFO.h * INFO_SCALE}px`,
-        backgroundSize: `${IMG.w * INFO_SCALE}px ${IMG.h * INFO_SCALE}px`,
-        backgroundPosition: `${-INFO.x * INFO_SCALE}px ${-INFO.y * INFO_SCALE}px`,
-      }}
-    ></div>
+    <div class="crop info-crop" role="img" aria-label="イベント情報（元画像の左上部分）"></div>
     <p class="hint">ドラッグ / ← → キーで回転</p>
+    <button type="button" class="see-through" aria-pressed="true">手前を透かす</button>
   </aside>
 
   <div class="crop scale-crop" aria-hidden="true"></div>
 </div>
 
 <script>
-  // 展開図の位置（1437×955 の GIF で実測）。枠線 (x=32,1404 / y=319,635) は含めない
-  const IMG = { w: 1437, h: 955 };
-  const BARREL = { x0: 33.5, x1: 1403.5, y0: 320.5, y1: 633.5 };
-  const CAP = { rx: 222.5, ry: 147.5, cx: 714.5, top: 170.5, bottom: 783.5 };
-  // 画像は横 12.92px/m・縦 8.73px/m（内水槽 直径 33.8m・高さ 36.2m）で描かれているので、縦を伸ばして実寸比に戻す
-  const ASPECT = (1372 / Math.PI / 33.8) / (316 / 36.2);
+  // 図の位置（画像の幅・高さに対する比率）。1437×955 と 1691×975 の 2 枚で実測し、差は 0.1% 以内
+  const LAYOUT = {
+    barrel: { x0: 0.0224, x1: 0.977, y0: 0.3337, y1: 0.6653 }, // 側面の枠線の位置
+    cap: { cx: 0.4971, rx: 0.1547, ry: 0.1536, top: 0.1782, bottom: 0.8205 }, // 天井・底面の楕円
+    info: { x0: 0.0125, x1: 0.2436, y0: 0.0084, y1: 0.2283 }, // 左上のイベント情報
+    scale: { x0: 0.0209, x1: 0.9743, y0: 0.979, y1: 1 }, // 下端のカラースケール
+  };
+  const BORDER = 1.5; // 枠線を含めないよう内側に寄せる量 (px)
+  // 内水槽は直径 33.8m・高さ 36.2m。画像は縦横の縮尺が違うので、縦を伸ばして実寸比に戻す
+  const TANK = { d: 33.8, h: 36.2 };
+  const INFO_WIDTH = 280; // イベント情報の表示幅 (px)
   const STRIPS = 72;
   // 公式の展開図はタンクの内側から見た向きで描かれている（と考えられる）。
   // そのまま外側に貼ると鏡像になるので、各面を左右反転して実際の配置に戻す。
@@ -56,6 +57,17 @@ const INFO_SCALE = 0.85;
   for (const view of document.querySelectorAll<HTMLElement>('.cyl-view')) {
     const scene = view.querySelector<HTMLElement>('.scene')!;
     const cyl = view.querySelector<HTMLElement>('.cyl')!;
+    const info = view.querySelector<HTMLElement>('.info-crop')!;
+    const scale = view.querySelector<HTMLElement>('.scale-crop')!;
+    const seeThroughButton = view.querySelector<HTMLButtonElement>('.see-through')!;
+    let seeThrough = view.dataset.seeThrough === 'true';
+    // 面ごとの外向き法線（円筒の座標系）。手前を向く面ほど薄くする
+    let normals: { el: HTMLElement; theta?: number; cap?: 'top' | 'bottom' }[] = [];
+    const FRONT_OPACITY = 0.22; // 真正面を向いた面の不透明度（奥の面は 1）
+
+    // 画像サイズ（初回は呼び出し側が data 属性に置いた値、無ければ実測時の値）
+    const host = view.closest<HTMLElement>('[data-skev-w]');
+    let img = { w: Number(host?.dataset.skevW) || 1437, h: Number(host?.dataset.skevH) || 955 };
 
     let tiltX = -20;
     let rotY = 0;
@@ -64,13 +76,49 @@ const INFO_SCALE = 0.85;
 
     const apply = () => {
       cyl.style.transform = `rotateX(${tiltX}deg) rotateY(${rotY}deg)`;
+      if (!seeThrough) return;
+      const rad = Math.PI / 180;
+      for (const n of normals) {
+        // 視点方向 (+z) への法線成分: 1 = 真正面、-1 = 真裏（奥の壁を内側から見ている）
+        const facing =
+          n.theta !== undefined
+            ? Math.cos((n.theta + rotY) * rad) * Math.cos(tiltX * rad)
+            : (n.cap === 'top' ? -1 : 1) * Math.sin(tiltX * rad);
+        n.el.style.opacity = String(FRONT_OPACITY + ((1 - FRONT_OPACITY) * (1 - facing)) / 2);
+      }
     };
+
+    const setSeeThrough = (on: boolean) => {
+      seeThrough = on;
+      view.dataset.seeThrough = String(on);
+      seeThroughButton.setAttribute('aria-pressed', String(on));
+      if (!on) for (const n of normals) n.el.style.opacity = '';
+      apply();
+    };
+    seeThroughButton.addEventListener('click', () => setSeeThrough(!seeThrough));
 
     // 側面は短冊を並べた多角柱、天井・底面は楕円を円に引き伸ばした板
     const build = () => {
+      const { w: W, h: Hi } = img;
+      const BARREL = {
+        x0: LAYOUT.barrel.x0 * W + BORDER,
+        x1: LAYOUT.barrel.x1 * W - BORDER,
+        y0: LAYOUT.barrel.y0 * Hi + BORDER,
+        y1: LAYOUT.barrel.y1 * Hi - BORDER,
+      };
+      const CAP = {
+        cx: LAYOUT.cap.cx * W,
+        rx: LAYOUT.cap.rx * W,
+        ry: LAYOUT.cap.ry * Hi,
+        top: LAYOUT.cap.top * Hi,
+        bottom: LAYOUT.cap.bottom * Hi,
+      };
+      const pxPerMeterX = ((LAYOUT.barrel.x1 - LAYOUT.barrel.x0) * W) / (Math.PI * TANK.d);
+      const pxPerMeterY = ((LAYOUT.barrel.y1 - LAYOUT.barrel.y0) * Hi) / TANK.h;
+
       const R = Math.max(100, Math.min(230, scene.clientWidth * 0.3));
       const k = (2 * Math.PI * R) / (BARREL.x1 - BARREL.x0); // 画像 px → 表示 px（横）
-      const ky = k * ASPECT; // 縦
+      const ky = k * (pxPerMeterX / pxPerMeterY); // 縦
       const H = (BARREL.y1 - BARREL.y0) * ky;
       const stripImgW = (BARREL.x1 - BARREL.x0) / STRIPS;
       const stripW = 2 * R * Math.tan(Math.PI / STRIPS) + 0.6; // 隙間が出ないよう少し重ねる
@@ -78,6 +126,7 @@ const INFO_SCALE = 0.85;
       scene.style.height = `${Math.round(H + 1.3 * R)}px`;
       scene.style.perspective = `${Math.round(8 * R)}px`;
       cyl.replaceChildren();
+      normals = [];
 
       for (let i = 0; i < STRIPS; i++) {
         const el = document.createElement('div');
@@ -88,11 +137,12 @@ const INFO_SCALE = 0.85;
           height: `${H}px`,
           left: `${-stripW / 2}px`,
           top: `${-H / 2}px`,
-          backgroundSize: `${IMG.w * k}px ${IMG.h * ky}px`,
+          backgroundSize: `${W * k}px ${Hi * ky}px`,
           backgroundPosition: `${-(BARREL.x0 + (i + 0.5) * stripImgW) * k + stripW / 2}px ${-BARREL.y0 * ky}px`,
           transform: `rotateY(${theta}deg) translateZ(${R}px)${FLIP}`,
         });
         cyl.appendChild(el);
+        normals.push({ el, theta });
       }
 
       // 天井・底面は側面の中央列で接し、左右は反転しない（ふちの光り方の相関で確認済み）
@@ -106,7 +156,7 @@ const INFO_SCALE = 0.85;
           height: `${2 * R}px`,
           left: `${-R}px`,
           top: `${-R}px`,
-          backgroundSize: `${IMG.w * sx}px ${IMG.h * sy}px`,
+          backgroundSize: `${W * sx}px ${Hi * sy}px`,
           backgroundPosition: `${-(CAP.cx - CAP.rx) * sx}px ${-(CAP[which] - CAP.ry) * sy}px`,
           transform:
             which === 'top'
@@ -114,9 +164,43 @@ const INFO_SCALE = 0.85;
               : `translateY(${H / 2}px) rotateX(-90deg)${FLIP}`,
         });
         cyl.appendChild(el);
+        normals.push({ el, cap: which });
+
+        // 透かしたときに形が分かるよう、天井と底面のふちに細い線を引く
+        const rim = document.createElement('div');
+        rim.className = 'rim';
+        Object.assign(rim.style, {
+          width: `${2 * R}px`,
+          height: `${2 * R}px`,
+          left: `${-R}px`,
+          top: `${-R}px`,
+          transform: which === 'top' ? `translateY(${-H / 2}px) rotateX(90deg)` : `translateY(${H / 2}px) rotateX(-90deg)`,
+        });
+        cyl.appendChild(rim);
       }
+
+      // イベント情報とカラースケールの切り抜き
+      const crop = (el: HTMLElement, r: { x0: number; x1: number; y0: number; y1: number }, width: number) => {
+        const s = width / ((r.x1 - r.x0) * W);
+        Object.assign(el.style, {
+          width: `${width}px`,
+          height: `${(r.y1 - r.y0) * Hi * s}px`,
+          backgroundSize: `${W * s}px ${Hi * s}px`,
+          backgroundPosition: `${-r.x0 * W * s}px ${-r.y0 * Hi * s}px`,
+        });
+      };
+      crop(info, LAYOUT.info, INFO_WIDTH);
+      crop(scale, LAYOUT.scale, scale.parentElement!.clientWidth - 2 * parseFloat(getComputedStyle(view).paddingLeft));
       apply();
     };
+
+    document.addEventListener('skev:size', e => {
+      const { w, h } = (e as CustomEvent<{ w: number; h: number }>).detail;
+      if (w && h && (w !== img.w || h !== img.h)) {
+        img = { w, h };
+        build();
+      }
+    });
 
     // 触ったら自動回転を止め、しばらく操作が無ければ再開する
     const interact = () => {
@@ -224,6 +308,43 @@ const INFO_SCALE = 0.85;
     position: absolute;
   }
 
+  .defs {
+    position: absolute;
+  }
+
+  [data-see-through='true'] .cyl :global(.face) {
+    filter: url(#skev-black-to-alpha);
+  }
+
+  .cyl :global(.rim) {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    pointer-events: none;
+    display: none;
+  }
+
+  [data-see-through='true'] .cyl :global(.rim) {
+    display: block;
+  }
+
+  .see-through {
+    align-self: flex-start;
+    font: inherit;
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+  }
+
+  .see-through[aria-pressed='true'] {
+    color: var(--text);
+    border-color: rgba(168, 85, 247, 0.5);
+  }
+
   /* 外周の白線が入らないよう少し内側で切る */
   .cyl :global(.cap) {
     border-radius: 50%;
@@ -242,13 +363,13 @@ const INFO_SCALE = 0.85;
     color: var(--muted);
   }
 
-  /* 下端のカラースケール (x 30–1400, y 935–955) をコンテナ幅に合わせて切り抜く */
+  /* 下端のカラースケール。大きさと位置は script で画像サイズから決める */
   .scale-crop {
     grid-area: scale;
-    width: 100%;
-    aspect-ratio: 1370 / 20;
-    background-size: calc(100% * 1437 / 1370) auto;
-    background-position: 44.8% 100%;
+  }
+
+  .info-crop {
+    max-width: 100%;
   }
 
   @media (max-width: 640px) {

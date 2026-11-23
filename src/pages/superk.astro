@@ -134,6 +134,14 @@ const fields = [
     text.textContent = message;
   };
 
+  // 画像サイズは日によって変わるので、読み込むたびに円筒表示へ知らせる
+  const announceSize = (w: number, h: number) => {
+    if (!w || !h) return;
+    monitor.dataset.skevW = String(w);
+    monitor.dataset.skevH = String(h);
+    document.dispatchEvent(new CustomEvent('skev:size', { detail: { w, h } }));
+  };
+
   const now = () =>
     new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -141,6 +149,7 @@ const fields = [
   const refresh = () => {
     const next = new Image();
     next.onload = () => {
+      announceSize(next.naturalWidth, next.naturalHeight);
       img.src = next.src;
       monitor.style.setProperty('--skev', `url("${next.src}")`);
       if (!paused) setStatus('live', `${now()} に更新`);
@@ -156,9 +165,17 @@ const fields = [
   };
 
   if (img.complete && img.naturalWidth > 0) {
+    announceSize(img.naturalWidth, img.naturalHeight);
     setStatus('live', `${now()} に更新`);
   } else {
-    img.addEventListener('load', () => setStatus('live', `${now()} に更新`), { once: true });
+    img.addEventListener(
+      'load',
+      () => {
+        announceSize(img.naturalWidth, img.naturalHeight);
+        setStatus('live', `${now()} に更新`);
+      },
+      { once: true },
+    );
     img.addEventListener('error', () => setStatus('error', '画像を取得できませんでした'), { once: true });
   }
 
