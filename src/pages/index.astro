@@ -1,5 +1,4 @@
 ---
-import { url } from '../utils/url';
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 ---
@@ -9,13 +8,7 @@ import Header from '../components/Header.astro';
     <div class="glow" aria-hidden="true"></div>
     <Header current="home" />
     <main class="hero">
-      <h1>
-        <span class="gradient-text">Write.</span><br />
-        <span class="gradient-text">Think.</span><br />
-        <span class="gradient-text">Share.</span>
-      </h1>
-      <p class="description">Astro で作るシンプルなブログ。</p>
-      <a href={url('/blog')} class="cta">記事を読む →</a>
+      <!-- トップページの内容は検討中 -->
     </main>
   </div>
 </Layout>
@@ -53,42 +46,5 @@ import Header from '../components/Header.astro';
     padding: 6rem 1rem;
     position: relative;
     z-index: 1;
-  }
-
-  h1 {
-    font-size: clamp(3rem, 10vw, 6rem);
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    margin-bottom: 1.5rem;
-  }
-
-  .gradient-text {
-    background: linear-gradient(135deg, var(--text) 0%, var(--accent-from) 50%, var(--accent-to) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .description {
-    color: var(--muted);
-    font-size: 1.1rem;
-    margin-bottom: 2.5rem;
-  }
-
-  .cta {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
-    color: #fff;
-    border-radius: var(--radius);
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: opacity 0.2s;
-  }
-
-  .cta:hover {
-    opacity: 0.85;
   }
 </style>
