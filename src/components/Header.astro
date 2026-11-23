@@ -13,7 +13,6 @@ const { current } = Astro.props;
     <a href={url('/')} class="logo">Astro Field</a>
   )}
   <nav>
-    <a href={url('/blog')} class:list={[{ active: current === 'blog' }]}>Blog</a>
     <a href={url('/minecraft')} class:list={[{ active: current === 'minecraft' }]}>Minecraft</a>
   </nav>
 </header>
