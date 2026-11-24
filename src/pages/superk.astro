@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import SuperKCylinder from '../components/SuperKCylinder.astro';
+import { pageTitle } from '../site';
 
 // 神岡宇宙素粒子研究施設が公開しているイベントディスプレイ画像。
 // 元ページ (realtimemonitor/) も 10 秒ごとに再読み込みしているので、同じ間隔で更新する。
@@ -23,7 +24,7 @@ const fields = [
 ---
 
 <Layout
-  title="スーパーカミオカンデ リアルタイムモニター — Astro Field"
+  title={pageTitle('スーパーカミオカンデ リアルタイムモニター')}
   description="スーパーカミオカンデが公開しているイベントディスプレイを、検出器の形に組み立てて表示します。"
 >
   <div class="page">

@@ -3,13 +3,14 @@ import { url } from '../../utils/url';
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
+import { SITE_NAME, pageTitle } from '../../site';
 
 const posts = (await getCollection('blog')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
 ---
 
-<Layout title="Blog — Astro Field" description="Astro Field のブログ記事一覧。">
+<Layout title={pageTitle('Blog')} description={`${SITE_NAME} のブログ記事一覧。`}>
   <div class="page">
     <Header current="blog" />
     <main>

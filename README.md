@@ -1,6 +1,8 @@
-# Astro Field
+# worldwidesuperkanioka
 
-Astro 6 で構築したシンプルなダークテーマのブログです。Markdown で記事を書き、静的サイトとして配信します。
+Astro 6 で作った個人サイトです。スーパーカミオカンデのリアルタイムモニターと、身内向けのマイクラサーバーの案内を置いています。GitHub Pages（https://superkanioka.github.io/astro-field/）で配信しています。
+
+サイトの表示名は [src/site.ts](src/site.ts) の `SITE_NAME` で変えられます（URL の `/astro-field/` はリポジトリ名なので別）。
 
 ## 必要環境
 
@@ -25,20 +27,26 @@ npm install
 
 ```text
 /
-├── public/                 # 静的アセット (favicon など)
+├── public/                     # 静的アセット (favicon など)
 ├── src/
 │   ├── components/
-│   │   └── Header.astro    # 全ページ共通のサイトヘッダー
-│   ├── content/
-│   │   └── blog/           # ブログ記事 (Markdown)
+│   │   ├── Header.astro        # 全ページ共通のヘッダー（サイト名とナビ）
+│   │   └── SuperKCylinder.astro # イベントディスプレイを円筒に組み立てる表示
+│   ├── content/blog/           # ブログ記事 (Markdown、ナビからは外している)
 │   ├── layouts/
-│   │   ├── Layout.astro    # ベースレイアウト・デザイントークン
-│   │   └── BlogPost.astro  # 記事用レイアウト
+│   │   ├── Layout.astro        # ベースレイアウト・色と書体の CSS 変数
+│   │   └── BlogPost.astro      # 記事用レイアウト
 │   ├── pages/
-│   │   ├── index.astro     # トップページ
-│   │   └── blog/           # 記事一覧と動的ルート
-│   └── content.config.ts   # Content Collections の定義
-├── astro.config.mjs        # Shiki テーマなど Astro 設定
+│   │   ├── index.astro         # トップページ（中身は空）
+│   │   ├── superk.astro        # スーパーカミオカンデ リアルタイムモニター
+│   │   ├── minecraft.astro     # マイクラサーバーの案内（検索エンジン除外）
+│   │   └── blog/               # 記事一覧と動的ルート
+│   ├── utils/url.ts            # サイト内リンクに /astro-field を付ける
+│   ├── site.ts                 # サイトの表示名
+│   └── content.config.ts       # Content Collections の定義
+├── .github/workflows/deploy.yml # master への push で GitHub Pages にデプロイ
+├── DESIGN.md                   # 見た目のルール
+├── astro.config.mjs            # site / base（GitHub Pages 用）など
 └── package.json
 ```
 
@@ -60,20 +68,18 @@ tags: ["astro", "blog"]
 
 `title` / `description` / `pubDate` は必須、`tags` は任意です。スキーマは [src/content.config.ts](src/content.config.ts) で Zod により検証されます。
 
-## デザインシステム
+## デザイン
 
-色・角丸・フォントは [src/layouts/Layout.astro](src/layouts/Layout.astro) のグローバル CSS 変数で一元管理しています。
+見た目のルール（色・書体・レイアウト・やらないこと）は [DESIGN.md](DESIGN.md) にまとめています。
+値の実体は [src/layouts/Layout.astro](src/layouts/Layout.astro) のグローバル CSS 変数です。
 
 | 変数 | 用途 |
 | :--- | :--- |
-| `--bg`, `--surface`, `--surface-hover` | 背景色 |
-| `--border` | 区切り線 |
-| `--text`, `--muted` | テキスト色 |
-| `--accent-from`, `--accent-to` | アクセント (グラデーション) |
-| `--radius` | 角丸 (12px) |
-| `--font` | フォントスタック |
-
-角丸を変えたい場合は `--radius` の値を変更すれば全コンポーネントに反映されます。
+| `--paper`, `--ink`, `--ore`, `--rule` | 地、本文、補足、弱い線 |
+| `--amber`, `--amber-text` | 唯一の強調色（面・印用と文字用） |
+| `--window` | 観測窓（モニター）の黒 |
+| `--font`, `--font-fixed` | BIZ UDPゴシック / BIZ UDゴシック（同梱） |
+| `--measure`, `--wide` | 文章の行長 / 広く見せるものの最大幅 |
 
 ## 参考
 

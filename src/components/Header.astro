@@ -1,5 +1,6 @@
 ---
 import { url } from '../utils/url';
+import { SITE_NAME } from '../site';
 interface Props {
   current?: 'home' | 'blog' | 'minecraft' | 'superk';
 }
@@ -13,9 +14,9 @@ const links = [
 
 <header class="site-header">
   {current === 'home' ? (
-    <span class="logo">Astro Field</span>
+    <span class="logo">{SITE_NAME}</span>
   ) : (
-    <a href={url('/')} class="logo">Astro Field</a>
+    <a href={url('/')} class="logo">{SITE_NAME}</a>
   )}
   <nav aria-label="ページ">
     {links.map(link => (

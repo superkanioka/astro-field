@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
+import { SITE_NAME, pageTitle } from '../site';
 
 // サーバー情報はここで一元管理する。変更時はこのブロックだけ直せばよい。
 const server = {
@@ -11,8 +12,8 @@ const server = {
 ---
 
 <Layout
-  title="マイクラサーバー — Astro Field"
-  description="Astro-field Minecraft サーバーへの接続方法。"
+  title={pageTitle('マイクラサーバー')}
+  description={`${SITE_NAME} の Minecraft サーバーへの接続方法。`}
   noindex
 >
   <div class="page">

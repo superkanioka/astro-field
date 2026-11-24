@@ -4,6 +4,7 @@ import '@fontsource/biz-udpgothic/700.css';
 import '@fontsource/biz-udgothic/400.css';
 import '@fontsource/biz-udgothic/700.css';
 import { url } from '../utils/url';
+import { pageTitle } from '../site';
 
 interface Props {
   title?: string;
@@ -11,7 +12,7 @@ interface Props {
   noindex?: boolean;
 }
 
-const { title = 'Astro Field', description, noindex = false } = Astro.props;
+const { title = pageTitle(), description, noindex = false } = Astro.props;
 ---
 
 <!doctype html>

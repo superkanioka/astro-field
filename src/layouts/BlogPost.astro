@@ -1,6 +1,7 @@
 ---
 import Layout from './Layout.astro';
 import Header from '../components/Header.astro';
+import { pageTitle } from '../site';
 
 interface Props {
   title: string;
@@ -17,7 +18,7 @@ const formattedDate = pubDate.toLocaleDateString('ja-JP', {
 });
 ---
 
-<Layout title={`${title} — Astro Field`} description={description}>
+<Layout title={pageTitle(title)} description={description}>
   <div class="page">
     <Header current="blog" />
     <main>
