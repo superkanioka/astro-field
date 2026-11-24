@@ -38,6 +38,7 @@ npm install
 │   ├── pages/
 │   │   ├── index.astro         # トップページ（中身は空）
 │   │   ├── superk.astro        # スーパーカミオカンデ リアルタイムモニター
+│   │   ├── 404.astro           # ページが見つからないとき（GitHub Pages が 404.html として使う）
 │   │   └── minecraft.astro     # マイクラサーバーの案内（検索エンジン除外）
 │   ├── utils/url.ts            # サイト内リンクに /astro-field を付ける
 │   └── site.ts                 # サイトの表示名

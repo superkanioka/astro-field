@@ -1,0 +1,45 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import { url } from '../utils/url';
+import { pageTitle } from '../site';
+---
+
+<Layout title={pageTitle('ページが見つかりません')} description="このアドレスのページはありません。" noindex>
+  <div class="page">
+    <Header />
+    <main>
+      <h1>ページが見つかりません</h1>
+      <p>このアドレスのページはありません。アドレスが変わったか、ページを削除した可能性があります。</p>
+      <ul class="links" aria-label="ページ">
+        <li><a href={url('/superk')}>スーパーカミオカンデ リアルタイムモニター</a></li>
+        <li><a href={url('/minecraft')}>マイクラサーバー</a></li>
+      </ul>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  main > :global(*) {
+    max-width: var(--measure);
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.125rem);
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 0.75rem;
+  }
+
+  p {
+    color: var(--ore);
+  }
+
+  .links {
+    list-style: none;
+    margin-top: 2rem;
+    display: grid;
+    gap: 0.5rem;
+    font-size: 1.0625rem;
+  }
+</style>
