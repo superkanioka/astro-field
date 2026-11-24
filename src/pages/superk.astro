@@ -9,7 +9,6 @@ const source = {
   image: 'https://www-sk.icrr.u-tokyo.ac.jp/realtimemonitor/skev.gif',
   page: 'https://www-sk.icrr.u-tokyo.ac.jp/realtimemonitor/',
   home: 'https://www-sk.icrr.u-tokyo.ac.jp/sk/',
-  detector: 'https://www-sk.icrr.u-tokyo.ac.jp/sk/about/detector/',
   intervalSec: 10,
 };
 
@@ -76,29 +75,6 @@ const fields = [
         </p>
         <p class="credit">
           個人の学習を目的とした非公式・非商用のページです。表示内容の正確さは保証されません。
-        </p>
-      </section>
-
-      <section aria-labelledby="howto-heading">
-        <h2 id="howto-heading">画像の見方</h2>
-        <p class="body">
-          スーパーカミオカンデは、5 万トンの水を入れた円筒形のタンクに光センサー（光電子増倍管）を並べた検出器です。
-          タンクは内水槽と外水槽の 2 層になっています（<a href={source.detector} target="_blank" rel="noopener">検出器の詳しい説明</a>）。
-        </p>
-        <ul class="body">
-          <li><strong>内水槽</strong>: 壁に <strong>11,129 本</strong>のセンサーが内向きに付いています。荷電粒子が水中を走ると出るチェレンコフ光を捉え、光の量と届いた時刻から粒子のエネルギーや向きを求めます。</li>
-          <li><strong>外水槽</strong>: <strong>1,885 本</strong>のセンサーが外向きに付いています。直径約 20cm（8 インチ）で、内水槽のものより小さいセンサーです。</li>
-        </ul>
-        <h3 class="sub">表示の読み方</h3>
-        <ul class="body">
-          <li><strong>展開図</strong>は、円筒形の検出器を切り開いたものです。大きい図が内水槽、右上の小さい図が外水槽で、どちらも中央の長方形が側面、上下の円が天井と底面です。壁はタンクの<strong>内側から見た</strong>向きで描かれています。</li>
-          <li><strong>円筒</strong>表示は、その展開図をタンクの形に組み直し、外から眺めたときの実際の配置になるよう左右を反転しています。ドラッグで回せます。</li>
-          <li>色の付いた小さな点が、光を捉えたセンサー 1 本です。<strong>色は光の強さ</strong>を表し、赤いほど強い光を受けています（下端の目盛り）。</li>
-          <li>円筒表示は内水槽だけを組み立てています。外水槽 (OD) の反応は展開図の右上で見られます。</li>
-          <li>リング状に光が集まっていれば、そこに向かって荷電粒子が走ったしるしです。</li>
-        </ul>
-        <p class="body note">
-          表示されるのは記録された全イベントのうちの 1 つずつです。大半は宇宙線ミューオンや放射線のバックグラウンドで、ニュートリノの反応はごく一部です。
         </p>
       </section>
 
@@ -372,46 +348,11 @@ const fields = [
     color: var(--muted);
   }
 
-  .credit a,
-  .body a {
+  .credit a {
     color: var(--accent-from);
     text-decoration: underline;
     text-decoration-color: rgba(168, 85, 247, 0.4);
     text-underline-offset: 3px;
-  }
-
-  /* 解説 */
-  .body {
-    color: #d4d4d8;
-    font-size: 0.95rem;
-    line-height: 1.8;
-  }
-
-  p.body + ul.body {
-    margin-top: 1rem;
-  }
-
-  .sub {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 1.5rem 0 0.75rem;
-  }
-
-  ul.body {
-    margin-left: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .body strong {
-    color: var(--text);
-  }
-
-  .note {
-    margin-top: 1rem;
-    color: var(--muted);
-    font-size: 0.875rem;
   }
 
   .fields {
