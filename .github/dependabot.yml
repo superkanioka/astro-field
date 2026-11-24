@@ -1,0 +1,15 @@
+# 依存パッケージと GitHub Actions の更新をプルリクエストで知らせる。
+# プルリクエストではチェックとビルドだけ走るので、通ったものをマージすれば公開される。
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      dependencies:
+        patterns: ['*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

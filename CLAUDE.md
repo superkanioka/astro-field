@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev       # Start dev server at localhost:4321
 npm run build     # Build to ./dist/
 npm run preview   # Preview production build locally
+npm run check     # Type check (astro check); CI runs it before build/deploy
 npm run astro ... # Run Astro CLI (e.g. astro add, astro check)
 ```
 
