@@ -1,5 +1,10 @@
 ---
+import '@fontsource/biz-udpgothic/400.css';
+import '@fontsource/biz-udpgothic/700.css';
+import '@fontsource/biz-udgothic/400.css';
+import '@fontsource/biz-udgothic/700.css';
 import { url } from '../utils/url';
+
 interface Props {
   title?: string;
   description?: string;
@@ -17,6 +22,7 @@ const { title = 'Astro Field', description, noindex = false } = Astro.props;
     <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
     <link rel="icon" href={url('/favicon.ico')} />
     <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#e6e8e6" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     {noindex && <meta name="robots" content="noindex, nofollow" />}
@@ -33,35 +39,79 @@ const { title = 'Astro Field', description, noindex = false } = Astro.props;
     padding: 0;
   }
 
+  /*
+   * 家の観測小屋。明るい坑道グレーの上に墨の文字、強調は光電子増倍管の琥珀 1 色だけ。
+   * 黒は観測窓（モニター）の中でしか使わない。
+   */
   :root {
-    --bg: #09090b;
-    --surface: rgba(255, 255, 255, 0.04);
-    --surface-hover: rgba(255, 255, 255, 0.07);
-    --border: rgba(255, 255, 255, 0.08);
-    --text: #fafafa;
-    --muted: #a1a1aa;
-    --accent-from: #a855f7;
-    --accent-to: #ec4899;
-    --radius: 12px;
-    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --paper: #e6e8e6; /* 坑道グレー: ページの地 */
+    --ink: #1d2327; /* 墨: 本文 */
+    --ore: #5b6570; /* 鉱石: 補足 */
+    --rule: #c3c8c6; /* 罫 */
+    --amber: #b8741a; /* 琥珀: 唯一の強調色（面・印） */
+    --amber-text: #7f4c0f; /* 琥珀: 文字に使うとき（地とのコントラスト 5:1 以上） */
+    --window: #000; /* 観測窓 */
+
+    --font: 'BIZ UDPGothic', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+    --font-fixed: 'BIZ UDGothic', 'Osaka-Mono', monospace;
+
+    --measure: 40rem; /* 本文の行長 */
+    --wide: 72rem; /* 観測窓など広く使うもの */
   }
 
-  html, body {
-    min-height: 100%;
-    background-color: var(--bg);
-    color: var(--text);
+  html {
+    background: var(--paper);
+    color: var(--ink);
     font-family: var(--font);
-    -webkit-font-smoothing: antialiased;
+    font-size: 100%;
+    line-height: 1.75;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100vh;
   }
 
   a {
-    color: inherit;
-    text-decoration: none;
+    color: var(--amber-text);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent-from);
-    outline-offset: 3px;
-    border-radius: var(--radius);
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* 日本語の見出しは文節で折り返す（対応ブラウザのみ） */
+  h1, h2 {
+    word-break: auto-phrase;
+    text-wrap: balance;
+  }
+
+  /* ページの外枠。見出しと本文は左揃え */
+  .page {
+    padding: 1.25rem clamp(1rem, 4vw, 2.5rem) 4rem;
+  }
+
+  .page main {
+    max-width: var(--wide);
+    margin: 0 auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 </style>

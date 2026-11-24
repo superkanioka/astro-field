@@ -23,18 +23,15 @@ const fields = [
 ---
 
 <Layout
-  title="Super-Kamiokande リアルタイムモニター — Astro Field"
-  description="スーパーカミオカンデが公開しているイベントディスプレイを 10 秒ごとに表示します。"
+  title="スーパーカミオカンデ リアルタイムモニター — Astro Field"
+  description="スーパーカミオカンデが公開しているイベントディスプレイを、検出器の形に組み立てて表示します。"
 >
   <div class="page">
-    <div class="glow" aria-hidden="true"></div>
     <Header current="superk" />
     <main>
       <header class="intro">
-        <h1>Super-Kamiokande リアルタイムモニター</h1>
-        <p class="lead">
-          スーパーカミオカンデで今まさに記録されたイベントを、検出器の形に組み立てて表示しています。
-        </p>
+        <h1>スーパーカミオカンデ リアルタイムモニター</h1>
+        <p>神岡の地下 1000m にある検出器が、いま記録したイベントです。10 秒ごとに新しい画像を取りに行きます。</p>
       </header>
 
       <section
@@ -43,42 +40,43 @@ const fields = [
         data-view="3d"
         style={`--skev: url("${source.image}")`}
       >
-        <div class="status">
-          <span class="dot" data-state="loading"></span>
-          <span class="status-text" aria-live="polite">読み込み中…</span>
+        <div class="toolbar">
+          <p class="status" aria-live="polite">
+            <span class="status-label">最終更新</span>
+            <time class="status-time">読み込み中</time>
+          </p>
           <div class="controls">
-            <div class="view-switch" role="group" aria-label="表示方法">
+            <div class="segmented" role="group" aria-label="表示方法">
               <button type="button" data-view="3d" aria-pressed="true">円筒</button>
               <button type="button" data-view="2d" aria-pressed="false">展開図</button>
             </div>
             <button type="button" class="toggle" aria-pressed="false">一時停止</button>
           </div>
         </div>
-        <div class="view-3d">
-          <SuperKCylinder />
+
+        <div class="window">
+          <div class="view-3d">
+            <SuperKCylinder />
+          </div>
+          <a href={source.page} target="_blank" rel="noopener" class="view-2d">
+            <img
+              id="skev"
+              src={source.image}
+              data-src={source.image}
+              data-interval={source.intervalSec}
+              width="1437"
+              height="955"
+              alt="スーパーカミオカンデの最新イベントディスプレイ"
+            />
+          </a>
         </div>
-        <a href={source.page} target="_blank" rel="noopener" class="frame view-2d">
-          <img
-            id="skev"
-            src={source.image}
-            data-src={source.image}
-            data-interval={source.intervalSec}
-            width="1437"
-            height="955"
-            alt="スーパーカミオカンデの最新イベントディスプレイ"
-          />
-        </a>
+
         <p class="credit">
-          このページの展開図と円筒表示は、<a href={source.home} target="_blank" rel="noopener">東京大学宇宙線研究所 神岡宇宙素粒子研究施設</a>
-          提供のデータ（<a href={source.page} target="_blank" rel="noopener">リアルタイムモニター</a>の画像）を用いています。
-          画像の著作権は同施設にあります。
-        </p>
-        <p class="credit">
-          個人の学習を目的とした非公式・非商用のページです。表示内容の正確さは保証されません。
+          展開図と円筒表示は、<a href={source.home} target="_blank" rel="noopener">東京大学宇宙線研究所 神岡宇宙素粒子研究施設</a>提供のデータ（<a href={source.page} target="_blank" rel="noopener">リアルタイムモニター</a>の画像）を用いています。画像の著作権は同施設にあります。個人の学習を目的とした非公式・非商用のページで、表示内容の正確さは保証されません。
         </p>
       </section>
 
-      <section aria-labelledby="fields-heading">
+      <section class="fields-section" aria-labelledby="fields-heading">
         <h2 id="fields-heading">イベント情報の項目</h2>
         <dl class="fields">
           {fields.map(f => (
@@ -96,8 +94,8 @@ const fields = [
 <script>
   const monitor = document.querySelector<HTMLElement>('.monitor')!;
   const img = document.getElementById('skev') as HTMLImageElement;
-  const dot = document.querySelector<HTMLElement>('.status .dot')!;
-  const text = document.querySelector<HTMLElement>('.status-text')!;
+  const status = document.querySelector<HTMLElement>('.status')!;
+  const time = document.querySelector<HTMLTimeElement>('.status-time')!;
   const toggle = document.querySelector<HTMLButtonElement>('.toggle')!;
 
   const base = img.dataset.src!;
@@ -105,9 +103,16 @@ const fields = [
   let paused = false;
   let timer: number | undefined;
 
+  // 更新した瞬間だけ時刻を琥珀色にして、何が変わったかを示す
   const setStatus = (state: 'live' | 'paused' | 'error' | 'loading', message: string) => {
-    dot.dataset.state = state;
-    text.textContent = message;
+    status.dataset.state = state;
+    time.textContent = message;
+    if (state === 'live') {
+      time.dateTime = new Date().toISOString();
+      time.classList.remove('fresh');
+      void time.offsetWidth;
+      time.classList.add('fresh');
+    }
   };
 
   // 画像サイズは日によって変わるので、読み込むたびに円筒表示へ知らせる
@@ -128,9 +133,9 @@ const fields = [
       announceSize(next.naturalWidth, next.naturalHeight);
       img.src = next.src;
       monitor.style.setProperty('--skev', `url("${next.src}")`);
-      if (!paused) setStatus('live', `${now()} に更新`);
+      if (!paused) setStatus('live', now());
     };
-    next.onerror = () => setStatus('error', `${now()} 取得に失敗（次回再試行）`);
+    next.onerror = () => setStatus('error', `${now()} に取得できませんでした。10 秒後にもう一度試します`);
     next.src = `${base}?t=${Date.now()}`;
   };
 
@@ -142,17 +147,17 @@ const fields = [
 
   if (img.complete && img.naturalWidth > 0) {
     announceSize(img.naturalWidth, img.naturalHeight);
-    setStatus('live', `${now()} に更新`);
+    setStatus('live', now());
   } else {
     img.addEventListener(
       'load',
       () => {
         announceSize(img.naturalWidth, img.naturalHeight);
-        setStatus('live', `${now()} に更新`);
+        setStatus('live', now());
       },
       { once: true },
     );
-    img.addEventListener('error', () => setStatus('error', '画像を取得できませんでした'), { once: true });
+    img.addEventListener('error', () => setStatus('error', '画像を取得できませんでした。10 秒後にもう一度試します'), { once: true });
   }
 
   toggle.addEventListener('click', () => {
@@ -160,7 +165,7 @@ const fields = [
     toggle.setAttribute('aria-pressed', String(paused));
     toggle.textContent = paused ? '再開' : '一時停止';
     if (paused) {
-      setStatus('paused', '一時停止中');
+      setStatus('paused', '止めています');
     } else {
       refresh();
     }
@@ -168,10 +173,10 @@ const fields = [
   });
 
   // 円筒 / 展開図の切り替え
-  for (const button of document.querySelectorAll<HTMLButtonElement>('.view-switch button')) {
+  for (const button of document.querySelectorAll<HTMLButtonElement>('.segmented button')) {
     button.addEventListener('click', () => {
       monitor.dataset.view = button.dataset.view;
-      for (const b of document.querySelectorAll<HTMLButtonElement>('.view-switch button')) {
+      for (const b of document.querySelectorAll<HTMLButtonElement>('.segmented button')) {
         b.setAttribute('aria-pressed', String(b === button));
       }
     });
@@ -187,122 +192,112 @@ const fields = [
 </script>
 
 <style>
-  .page {
-    min-height: 100vh;
-    padding: 1.5rem;
-    position: relative;
-    overflow: hidden;
+  .intro {
+    margin-bottom: 2rem;
   }
 
-  .glow {
-    position: absolute;
-    top: -200px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  main {
-    max-width: 960px;
-    margin: 3rem auto 4rem;
-    padding: 0 1rem;
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
+  .intro p {
+    max-width: var(--measure);
   }
 
   h1 {
-    font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.125rem);
     font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-    background: linear-gradient(135deg, var(--text), var(--accent-from));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    line-height: 1.35;
+    margin-bottom: 0.75rem;
   }
 
-  .lead {
-    color: var(--muted);
-    line-height: 1.8;
+  .intro p {
+    color: var(--ore);
   }
 
   h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    font-size: 1.125rem;
+    font-weight: 700;
     margin-bottom: 1rem;
   }
 
-  /* モニター */
-  .status {
+  /* 操作列: 左に更新時刻、右に切り替え */
+  .toolbar {
     display: flex;
-    align-items: center;
-    gap: 0.6rem;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
     margin-bottom: 0.75rem;
-    font-size: 0.85rem;
-    color: var(--muted);
   }
 
-  .dot {
-    width: 0.55rem;
-    height: 0.55rem;
-    border-radius: 999px;
-    background: var(--muted);
+  .status {
+    font-size: 0.9375rem;
+    color: var(--ore);
   }
 
-  .dot[data-state='live'] {
-    background: #22c55e;
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
-    animation: pulse 2s infinite;
+  .status-time {
+    margin-left: 0.5em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    transition: color 1.6s ease-out;
   }
 
-  .dot[data-state='error'] {
-    background: #ef4444;
+  .status-time.fresh {
+    color: var(--amber);
+    transition: none;
   }
 
-  @keyframes pulse {
-    70% { box-shadow: 0 0 0 0.5rem rgba(34, 197, 94, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .dot[data-state='live'] { animation: none; }
+  .status[data-state='error'] .status-time {
+    color: var(--amber-text);
   }
 
   .controls {
     margin-left: auto;
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
   }
 
-  .view-switch {
+  .segmented {
     display: flex;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
   }
 
-  .view-switch button {
-    font: inherit;
-    font-size: 0.8rem;
-    color: var(--muted);
-    background: var(--surface);
-    border: 0;
-    padding: 0.3rem 0.8rem;
+  .segmented button,
+  .toggle {
+    font-size: 0.875rem;
+    padding: 0.3rem 0.9rem;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ore);
     cursor: pointer;
   }
 
-  .view-switch button[aria-pressed='true'] {
-    color: #fff;
-    background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  .segmented button:first-child {
+    border-radius: 4px 0 0 4px;
+  }
+
+  .segmented button:last-child {
+    border-radius: 0 4px 4px 0;
+    border-left: 0;
+  }
+
+  .toggle {
+    border-radius: 4px;
+  }
+
+  .segmented button:hover,
+  .toggle:hover {
+    color: var(--ink);
+    border-color: var(--ore);
+  }
+
+  .segmented button[aria-pressed='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  /* 観測窓: このページで唯一の黒 */
+  .window {
+    background: var(--window);
+    border-radius: 6px;
+    overflow: hidden;
   }
 
   .monitor[data-view='3d'] .view-2d,
@@ -310,74 +305,58 @@ const fields = [
     display: none;
   }
 
-  .toggle {
-    font: inherit;
-    font-size: 0.8rem;
-    color: var(--muted);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.3rem 0.8rem;
-    cursor: pointer;
-    transition: color 0.2s, background 0.2s;
-  }
-
-  .toggle:hover {
-    color: var(--text);
-    background: var(--surface-hover);
-  }
-
-  .frame {
-    display: block;
-    background: #000;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .frame img {
+  .view-2d img {
     display: block;
     width: 100%;
     height: auto;
   }
 
   .credit {
-    margin-top: 0.5rem;
+    max-width: var(--measure);
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
     line-height: 1.7;
-    font-size: 0.8rem;
-    color: var(--muted);
+    color: var(--ore);
   }
 
-  .credit a {
-    color: var(--accent-from);
-    text-decoration: underline;
-    text-decoration-color: rgba(168, 85, 247, 0.4);
-    text-underline-offset: 3px;
+  .fields-section {
+    max-width: var(--measure);
+    margin-top: 3.5rem;
   }
 
   .fields {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: max-content 1fr;
+    gap: 0.75rem 1.5rem;
   }
 
   .field {
-    padding: 1rem 1.25rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    display: contents;
   }
 
   dt {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 0.35rem;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    white-space: nowrap;
   }
 
   dd {
-    font-size: 0.85rem;
-    color: var(--muted);
-    line-height: 1.7;
+    font-size: 0.9375rem;
+    color: var(--ore);
+  }
+
+  @media (max-width: 560px) {
+    .controls {
+      margin-left: 0;
+    }
+
+    .fields {
+      grid-template-columns: 1fr;
+      gap: 0.125rem;
+    }
+
+    dd {
+      margin-bottom: 0.75rem;
+    }
   }
 </style>
